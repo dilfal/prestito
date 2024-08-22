@@ -5,57 +5,104 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calcolatore prestito</title>
     <link rel="stylesheet" href="styles.css">
-    <link rel="icon" href="favicon.ico" type="image/x-icon">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
 </head>
-<body>
+<body class="dark-theme">
+    <div class="theme-toggle">
+        <span id="light-mode-icon" class="theme-icon">🌞</span>
+        <span id="dark-mode-icon" class="theme-icon">🌙</span>
+    </div>
     <div class="container">
-        <h1>💰️ Calcolatore prestito</h1>
+        <h1>Calcolatore prestito</h1>
         <div class="input-container">
-            <label for="loan-amount">Importo totale del prestito (€):</label>
-            <input type="number" id="loan-amount" placeholder="Inserisci l'importo totale">
+            <label for="calculation-mode">Seleziona il tipo di calcolo:</label>
+            <select id="calculation-mode">
+                <option value="calculate-rate">Calcolo dell'importo della rata</option>
+                <option value="calculate-tan-taeg">Calcolo di TAN e TAEG</option>
+            </select>
         </div>
-        <div class="input-container">
-            <label for="first-payment">Importo della prima rata (€):</label>
-            <input type="number" id="first-payment" placeholder="Inserisci l'importo della prima rata">
+
+        <!-- Sezione per calcolare l'importo delle rate -->
+        <div id="rate-calculation-section">
+            <div class="input-container">
+                <label for="loan-amount-rate">Importo totale del prestito (€):</label>
+                <input type="number" id="loan-amount-rate" placeholder="Inserisci l'importo totale">
+            </div>
+            <div class="input-container">
+                <label for="loan-duration-rate">Durata del prestito (mesi):</label>
+                <input type="number" id="loan-duration-rate" placeholder="Inserisci la durata in mesi">
+            </div>
+            <div class="input-container">
+                <label for="tan-rate">TAN (%):</label>
+                <input type="number" id="tan-rate" placeholder="Inserisci il TAN">
+            </div>
+            <div class="input-container">
+                <label for="taeg-rate">TAEG (%):</label>
+                <input type="number" id="taeg-rate" placeholder="Inserisci il TAEG">
+            </div>
+            <button id="calculate-rate-btn" class="btn">Calcola Importo Rate</button>
         </div>
-        <div class="input-container">
-            <label for="monthly-payment">Importo delle rate successive (€):</label>
-            <input type="number" id="monthly-payment" placeholder="Inserisci l'importo delle rate successive">
+
+        <!-- Sezione per calcolare TAN e TAEG a partire dalla rata -->
+        <div id="tan-taeg-calculation-section" style="display: none;">
+            <div class="input-container">
+                <label for="loan-amount">Importo totale del prestito (€):</label>
+                <input type="number" id="loan-amount" placeholder="Inserisci l'importo totale">
+            </div>
+            <div class="input-container">
+                <label for="monthly-payment">Importo rata (€):</label>
+                <input type="number" id="monthly-payment" placeholder="Inserisci l'importo della rata">
+            </div>
+            <div class="input-container">
+                <label>
+                    <input type="checkbox" id="different-first-payment"> La prima rata è diversa
+                </label>
+            </div>
+            <div class="input-container" id="first-payment-container" style="display: none;">
+                <label for="first-payment">Importo della prima rata (€):</label>
+                <input type="number" id="first-payment" placeholder="Inserisci l'importo della prima rata">
+            </div>
+            <div class="input-container">
+                <label for="loan-duration">Durata del prestito (mesi):</label>
+                <input type="number" id="loan-duration" placeholder="Inserisci la durata in mesi">
+            </div>
+            <div class="input-container">
+                <label for="accessory-fees">Spese Accessorie (€):</label>
+                <input type="number" id="accessory-fees" placeholder="Inserisci le spese accessorie" value="0">
+            </div>
+            <button id="calculate-btn" class="btn">Calcola TAN e TAEG</button>
         </div>
-        <div class="input-container">
-            <label for="loan-duration">Durata del prestito (mesi):</label>
-            <input type="number" id="loan-duration" placeholder="Inserisci la durata in mesi">
-        </div>
-        <div class="input-container">
-            <label for="accessory-fees">Spese Accessorie (€):</label>
-            <input type="number" id="accessory-fees" placeholder="Inserisci le spese accessorie" value="0">
-        </div>
-        <button id="calculate-btn">Calcola</button>
-        <div id="results">
+
+        <!-- Risultati per entrambe le modalità -->
+        <div id="results" style="display: none;">
             <h2>Risultati</h2>
-            <p>TAN: <span id="tan"></span>%</p>
-            <p>TAEG: <span id="taeg"></span>%</p>
+            <p id="rate-result" style="display: none;">Importo della rata: <span id="calculated-rate"></span> €</p>
+            <p id="tan-result">TAN: <span id="tan"></span>%</p>
+            <p id="taeg-result">TAEG: <span id="taeg"></span>%</p>
             <h3>Piano di Ammortamento</h3>
-            <table id="amortization-schedule">
-                <thead>
-                    <tr>
-                        <th>Mese</th>
-                        <th>Capitale Residuo (€)</th>
-                        <th>Interessi Pagati (€)</th>
-                        <th>Capitale Pagato (€)</th>
-                        <th>Interessi Totali Pagati (€)</th>
-                        <th>Capitale Totale Pagato (€)</th>
-                        <th>Rata (€)</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- I risultati saranno inseriti qui con JavaScript -->
-                </tbody>
-            </table>
+            <div class="table-container">
+                <table id="amortization-schedule">
+                    <thead>
+                        <tr>
+                            <th>Mese</th>
+                            <th>Capitale Pagato (€)</th>
+                            <th>Interessi Pagati (€)</th>
+                            <th>Capitale Totale Pagato (€)</th>
+                            <th>Interessi Totali Pagati (€)</th>
+                            <th>Capitale Residuo (€)</th>
+                            <th>Interessi Residui (€)</th>
+                            <th>Rata (€)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- I risultati saranno inseriti qui con JavaScript -->
+                    </tbody>
+                </table>
+            </div>
         </div>
-        <button id="save-btn">Salva come Excel</button>
+        <button id="save-btn" class="btn">Salva come Excel</button>
     </div>
     <script src="script.js"></script>
 </body>
 </html>
+
