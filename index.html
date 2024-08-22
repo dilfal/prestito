@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calcolo TAN e Piano di Ammortamento</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Calcolo TAN e Piano di Ammortamento</h1>
+        <form id="loanForm">
+            <div class="input-group">
+                <label for="calculationType">Tipo di Calcolo:</label>
+                <select id="calculationType" required>
+                    <option value="fromRate">Calcolo da Rata</option>
+                    <option value="fromTan">Calcolo da TAN</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label for="loanAmount">Importo del Prestito (€):</label>
+                <input type="number" id="loanAmount" required>
+            </div>
+            <div class="input-group">
+                <label for="loanDuration">Durata del Prestito (mesi):</label>
+                <input type="number" id="loanDuration" required>
+            </div>
+            <div class="input-group" id="rateInputGroup">
+                <label for="monthlyPayment">Importo delle Rate (€):</label>
+                <input type="number" id="monthlyPayment" step="0.01">
+            </div>
+            <div class="input-group" id="tanInputGroup" style="display:none;">
+                <label for="tanInput">TAN (%):</label>
+                <input type="number" step="0.01" id="tanInput">
+            </div>
+            <button type="submit">Calcola</button>
+        </form>
+
+        <div id="results" class="hidden">
+            <h2>Risultati:</h2>
+            <p><strong>Rata Mensile:</strong> €<span id="calculatedMonthlyPayment"></span></p>
+            <p><strong>TAN:</strong> <span id="calculatedTan"></span>%</p>
+            <p><strong>Interessi Totali:</strong> €<span id="totalInterest"></span></p>
+            <h3>Dettaglio del Piano di Ammortamento</h3>
+            <table id="amortizationTable">
+                <thead>
+                    <tr>
+                        <th>Mese</th>
+                        <th>Interessi Pagati (€)</th>
+                        <th>Capitale Pagato (€)</th>
+                        <th>Totale Interessi (€)</th>
+                        <th>Totale Capitale (€)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Riga per il dettaglio di ogni mese -->
+                </tbody>
+            </table>
+            <button id="saveButton" class="hidden">Salva in .txt</button>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
