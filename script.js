@@ -1,144 +1,86 @@
 
-document.getElementById('calculationType').addEventListener('change', function() {
-    const calcType = document.getElementById('calculationType').value;
-    console.log('Tipo di calcolo selezionato:', calcType);
-    if (calcType === 'fromRate') {
-        document.getElementById('rateInputGroup').style.display = 'block';
-        document.getElementById('tanInputGroup').style.display = 'none';
-    } else {
-        document.getElementById('rateInputGroup').style.display = 'none';
-        document.getElementById('tanInputGroup').style.display = 'block';
-    }
-});
+document.getElementById('calculate-btn').addEventListener('click', function() {
+    const loanAmount = parseFloat(document.getElementById('loan-amount').value);
+    const firstPayment = parseFloat(document.getElementById('first-payment').value);
+    const monthlyPayment = parseFloat(document.getElementById('monthly-payment').value);
+    const loanDuration = parseFloat(document.getElementById('loan-duration').value);
+    const accessoryFeesInput = parseFloat(document.getElementById('accessory-fees').value);
 
-document.getElementById('loanForm').addEventListener('submit', function(event) {
-    event.preventDefault();
-
-    const calcType = document.getElementById('calculationType').value;
-    const loanAmount = parseFloat(document.getElementById('loanAmount').value);
-    const loanDuration = parseInt(document.getElementById('loanDuration').value);
-    console.log('Calcolo iniziato con tipo:', calcType);
-    console.log('Importo prestito:', loanAmount, 'Durata:', loanDuration);
-
-    let monthlyPayment, tan, totalInterest;
-
-    if (calcType === 'fromRate') {
-        monthlyPayment = parseFloat(document.getElementById('monthlyPayment').value);
-        console.log('Rata mensile inserita:', monthlyPayment);
-        tan = calculateTAN(loanAmount, loanDuration, monthlyPayment);
-        console.log('TAN calcolato:', tan);
-        document.getElementById('calculatedTan').textContent = (tan * 100).toFixed(2);
-    } else {
-        tan = parseFloat(document.getElementById('tanInput').value) / 100;
-        console.log('TAN inserito:', tan);
-        monthlyPayment = calculateMonthlyPayment(loanAmount, loanDuration, tan);
-        console.log('Rata mensile calcolata:', monthlyPayment);
-        document.getElementById('calculatedMonthlyPayment').textContent = monthlyPayment.toFixed(2);
+    if (isNaN(loanAmount) || isNaN(firstPayment) || isNaN(monthlyPayment) || isNaN(loanDuration) || isNaN(accessoryFeesInput)) {
+        alert('Per favore, inserisci tutti i valori.');
+        return;
     }
 
-    const amortizationSchedule = generateAmortizationSchedule(loanAmount, loanDuration, tan, monthlyPayment);
-    totalInterest = amortizationSchedule.reduce((acc, cur) => acc + parseFloat(cur.interestPayment), 0);
-    console.log('Totale interessi:', totalInterest);
+    // Calcolo del TAN (evitando loop infinito)
+    function calculateTAN(loanAmount, monthlyPayment, loanDuration) {
+        let low = 0;
+        let high = 1;
+        let guess = (low + high) / 2;
 
-    document.getElementById('totalInterest').textContent = totalInterest.toFixed(2);
-    displayAmortizationSchedule(amortizationSchedule);
-    document.getElementById('results').classList.remove('hidden');
-    document.getElementById('saveButton').classList.remove('hidden');
+        while (high - low > 0.00001) {
+            let rateFactor = Math.pow(1 + guess, loanDuration);
+            let estimatedPayment = loanAmount * (guess * rateFactor) / (rateFactor - 1);
 
-    // Prepare data for saving
-    const resultText = prepareResultText(amortizationSchedule, monthlyPayment, tan, loanAmount, totalInterest);
-    document.getElementById('saveButton').addEventListener('click', function() {
-        saveTextAsFile(resultText, 'risultato_prestito.txt');
-    });
-});
-
-function calculateTAN(principal, duration, payment) {
-    let low = 0;
-    let high = 1;
-    let rate;
-
-    while (high - low > 0.00001) {
-        rate = (low + high) / 2;
-        let calcPayment = (principal * rate) / (1 - Math.pow(1 + rate, -duration));
-        if (calcPayment > payment) {
-            high = rate;
-        } else {
-            low = rate;
+            if (estimatedPayment > monthlyPayment) {
+                high = guess;
+            } else {
+                low = guess;
+            }
+            guess = (low + high) / 2;
         }
-    }
-    return rate * 12; // TAN annuale
-}
 
-function calculateMonthlyPayment(principal, duration, annualRate) {
-    const monthlyRate = annualRate / 12;
-    return (principal * monthlyRate) / (1 - Math.pow(1 + monthlyRate, -duration));
-}
-
-function generateAmortizationSchedule(principal, duration, annualRate, monthlyPayment) {
-    let balance = principal;
-    let monthlyRate = annualRate / 12;
-
-    const schedule = [];
-    let totalInterest = 0;
-    let totalPrincipal = 0;
-
-    for (let i = 1; i <= duration; i++) {
-        let interestPayment = balance * monthlyRate;
-        let principalPayment = monthlyPayment - interestPayment;
-
-        balance -= principalPayment;
-        totalInterest += interestPayment;
-        totalPrincipal += principalPayment;
-
-        schedule.push({
-            month: i,
-            interestPayment: interestPayment.toFixed(2),
-            principalPayment: principalPayment.toFixed(2),
-            totalInterest: totalInterest.toFixed(2),
-            totalPrincipal: totalPrincipal.toFixed(2),
-        });
+        return guess * 12 * 100;  // TAN annualizzato
     }
 
-    return schedule;
-}
+    const tan = calculateTAN(loanAmount, monthlyPayment, loanDuration);
+    document.getElementById('tan').textContent = tan.toFixed(2);
 
-function displayAmortizationSchedule(schedule) {
-    const tableBody = document.querySelector('#amortizationTable tbody');
-    tableBody.innerHTML = '';
+    // Calcolo delle spese accessorie (differenza tra la prima rata e le successive + spese accessorie input dall'utente)
+    const accessoryExpenses = (firstPayment - monthlyPayment) + accessoryFeesInput;
 
-    schedule.forEach(row => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td>${row.month}</td>
-            <td>${row.interestPayment}</td>
-            <td>${row.principalPayment}</td>
-            <td>${row.totalInterest}</td>
-            <td>${row.totalPrincipal}</td>
-        `;
-        tableBody.appendChild(tr);
-    });
-}
+    // Calcolo del TAEG utilizzando il TAN e le spese accessorie
+    function calculateTAEG(tan, accessoryExpenses, loanAmount, loanDuration) {
+        const n = 12;  // Assumendo rate mensili
+        const r = tan / 100 / n;  // Tasso di interesse per rata
+        const q = accessoryExpenses / (loanAmount * (loanDuration / 12));  // Quota aggiuntiva delle spese accessorie
 
-function prepareResultText(schedule, monthlyPayment, tan, loanAmount, totalInterest) {
-    let text = 'Importo del Prestito: €' + loanAmount.toFixed(2) + '\n';
-    text += 'Durata del Prestito: ' + schedule.length + ' mesi\n';
-    text += 'Rata Mensile: €' + monthlyPayment.toFixed(2) + '\n';
-    text += 'TAN: ' + (tan * 100).toFixed(2) + '%\n';
-    text += 'Totale Interessi Pagati: €' + totalInterest.toFixed(2) + '\n\n';
-    text += 'Piano di Ammortamento:\n';
-    text += 'Mese\tInteressi Pagati (€)\tCapitale Pagato (€)\tTotale Interessi (€)\tTotale Capitale (€)\n';
+        const taeg = Math.pow(1 + r + q, n) - 1;  // Formula del TAEG
+        return taeg * 100;  // Convertiamo in percentuale
+    }
 
-    schedule.forEach(row => {
-        text += row.month + '\t' + row.interestPayment + '\t' + row.principalPayment + '\t' + row.totalInterest + '\t' + row.totalPrincipal + '\n';
-    });
+    const taeg = calculateTAEG(tan, accessoryExpenses, loanAmount, loanDuration);
+    document.getElementById('taeg').textContent = taeg.toFixed(2);
 
-    return text;
-}
+    // Generazione piano di ammortamento
+    const amortizationSchedule = document.getElementById('amortization-schedule').getElementsByTagName('tbody')[0];
+    amortizationSchedule.innerHTML = ''; // Svuotiamo la tabella
 
-function saveTextAsFile(text, filename) {
-    const blob = new Blob([text], { type: 'text/plain' });
-    const link = document.createElement('a');
-    link.download = filename;
-    link.href = window.URL.createObjectURL(blob);
-    link.click();
-}
+    let balance = loanAmount;
+    let totalInterestPaid = 0;
+    let totalPrincipalPaid = 0;
+
+    for (let month = 1; month <= loanDuration; month++) {
+        let interest, principal;
+
+        if (month === 1) {
+            interest = accessoryExpenses + (balance * tan / 1200);
+            principal = firstPayment - interest;
+        } else {
+            interest = balance * tan / 1200;
+            principal = monthlyPayment - interest;
+        }
+
+        balance -= principal;
+        totalInterestPaid += interest;
+        totalPrincipalPaid += principal;
+
+        const row = amortizationSchedule.insertRow();
+        row.insertCell(0).textContent = month;
+        row.insertCell(1).textContent = balance.toFixed(2);
+        row.insertCell(2).textContent = interest.toFixed(2);
+        row.insertCell(3).textContent = principal.toFixed(2);
+        row.insertCell(4).textContent = totalInterestPaid.toFixed(2);
+        row.insertCell(5).textContent = totalPrincipalPaid.toFixed(2);
+        row.insertCell(6).textContent = month === 1 ? firstPayment.toFixed(2) : monthlyPayment.toFixed(2);
+    }
+});
