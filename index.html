@@ -81,26 +81,39 @@
             <p id="taeg-result">TAEG: <span id="taeg"></span>%</p>
             <h3>Piano di Ammortamento</h3>
             <div class="table-container">
-                <table id="amortization-schedule">
-                    <thead>
-                        <tr>
-                            <th>Mese</th>
-                            <th>Capitale Pagato (€)</th>
-                            <th>Interessi Pagati (€)</th>
-                            <th>Capitale Totale Pagato (€)</th>
-                            <th>Interessi Totali Pagati (€)</th>
-                            <th>Capitale Residuo (€)</th>
-                            <th>Interessi Residui (€)</th>
-                            <th>Rata (€)</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <!-- I risultati saranno inseriti qui con JavaScript -->
-                    </tbody>
-                </table>
+                <div class="table-container">
+                    <table id="amortization-schedule">
+                        <thead>
+                            <tr>
+                                <th>Mese</th>
+                                <th>Capitale Pagato (€)</th>
+                                <th>Interessi Pagati (€)</th>
+                                <th>Capitale Totale Pagato (€)</th>
+                                <th>Interessi Totali Pagati (€)</th>
+                                <th>Capitale Residuo (€)</th>
+                                <th>Interessi Residui (€)</th>
+                                <th>Rata (€)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- I risultati saranno inseriti qui con JavaScript -->
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <th>Mese</th>
+                                <th>Capitale Pagato (€)</th>
+                                <th>Interessi Pagati (€)</th>
+                                <th>Capitale Totale Pagato (€)</th>
+                                <th>Interessi Totali Pagati (€)</th>
+                                <th>Capitale Residuo (€)</th>
+                                <th>Interessi Residui (€)</th>
+                                <th>Rata (€)</th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>                
             </div>
-        </div>
-        <button id="save-btn" class="btn">Salva come Excel</button>
+        <button id="download-excel-btn" style="display:none;">Scarica Excel</button>
     </div>
     <script src="script.js"></script>
 </body>
